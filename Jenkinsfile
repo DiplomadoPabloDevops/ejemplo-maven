@@ -1,53 +1,42 @@
 pipeline {
     agent any
-
     stages {
-        stage('Compile') {
-            steps {
-                script {
-                        bat  "./mvnw.cmd clean compile -e"           
-                }
-            }
-        }
-
-        stage('Test') {
-            steps {
-                script {
-                        bat  "./mvnw.cmd clean test -e"
-                }
-            }
-        }
        stage('Jar') {
             steps {
                 script {
-                        bat  "./mvnw.cmd clean package -e"
-                }
-            }
-        }
-	stage('SonarQube analysis 2') {
-            steps {
-                script {
-                    def scannerHome = tool 'sonar-scanner';
-                    withSonarQubeEnv('sonar-scanner') {
-                    bat "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=ejemplo-maven2 -Dsonar.sources=src/main/java/  -Dsonar.java.binaries=build -Dsonar.projectBaseDir=C:/Users/PCAMPOS/.jenkins/workspace/peline_multibranch_feature-nexus -Dsonar.login=8e8236752890bf7bb18bc071593360e27a3d0346"
+                    dir('C:/Users/PCAMPOS/.jenkins/workspace/peline_multibranch_feature-nexus2/build'){
+                        bat  "curl -X GET -u admin:pablo1994 http://localhost:8089/repository/nexus-test/com/devopsusach2020/DevOpsUsach2020/0.0.1/DevOpsUsach2020-0.0.1.jar -O"     
                     }
                 }
             }
         }
-	stage('Nexus Upload') {
+        stage('Run') {
             steps {
-		        nexusPublisher nexusInstanceId: 'nexus_test', nexusRepositoryId: 'test-repo', 
-		        packages: [[$class: 'MavenPackage', 
-			    mavenAssetList: [[classifier: '', 
-			    extension: '', 
-			    filePath: 'C:/Users/PCAMPOS/.jenkins/workspace/peline_multibranch_feature-nexus/build/DevOpsUsach2020-0.0.1.jar']], 
-			    mavenCoordinate: [artifactId: 'DevOpsUsach2020', 
-			    groupId: 'com.devopsusach2020', 
-			    packaging: 'jar', 
-			    version: '0.0.1']
-			    ]]
+                script {
+                        bat  "start /min mvnw.cmd spring-boot:run &"
+                }
             }
-    }
-	
+        }
+	    stage('Test') {
+            steps {
+                script {
+                        bat  'curl -X GET "http://localhost:8081/rest/mscovid/test?msg=testing"'
+                }
+            }
+        }
+	    stage('Nexus Upload') {
+            steps {
+		    nexusPublisher nexusInstanceId: 'nexus_test', nexusRepositoryId: 'test-repo', 
+		    packages: [[$class: 'MavenPackage', 
+			mavenAssetList: [[classifier: '', 
+			extension: '', 
+			filePath: 'C:/Users/PCAMPOS/.jenkins/workspace/peline_multibranch_feature-nexus2/build/DevOpsUsach2020-0.0.1.jar']], 
+			mavenCoordinate: [artifactId: 'DevOpsUsach2020', 
+			groupId: 'com.devopsusach2020', 
+			packaging: 'jar', 
+			version: '1.0.0']
+			]]
+            }
+        }
     }
 }
